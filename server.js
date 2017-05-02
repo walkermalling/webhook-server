@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 
 const BRANCH_NAME = '';
+const PORT = 4073;
 
 const app = express();
 
@@ -15,6 +16,7 @@ app.use((req, res, next) => {
 
   if (req.body.ref.indexOf(BRANCH_NAME) === -1) {
     res.status(204).send('no action taken');
+    return;
   }
 
   if (res.locals.event === 'push') {
@@ -35,10 +37,14 @@ app.use((req, res, next) => {
   /* eslint-enable no-param-reassign */
 });
 
-app.post('/webhook', (req, res, next) => {
-
+app.post('/webhook', (req, res) => {
+  res.status(204).send('ok');
 });
 
-app.use((req,res,next) => {
+app.use((req, res) => {
   res.status(404).send('404');
+});
+
+app.listen(PORT, () => {
+  process.stdout.write(`Webhook Service listening on port ${PORT}`);
 });
