@@ -1,0 +1,8 @@
+{
+  "extends": "airbnb",
+  "rules": {
+    "max-len": [2, 120],
+    "no-var": [0],
+    "vars-on-top": [0]
+  }
+}
