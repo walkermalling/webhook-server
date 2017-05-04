@@ -1,10 +1,19 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const execFile = require('child_process').execFile;
+const config = require('./config.json');
 
-const BRANCH_NAME = 'designated';
-const FILE = 'pullFromOrigin.sh';
-const PORT = 4073;
+['branch', 'script', 'app_path', 'port'].forEach((option) => {
+  if (!config[option]) {
+    process.stdout.write(`\nThe Webhook service requires a ${option} to be set\n`);
+    process.exit(1);
+  }
+});
+
+const BRANCH_NAME = config.branch;
+const SCRIPT = config.script;
+const APP_PATH = config.app_path;
+const PORT = parseInt(config.port, 10);
 
 const app = express();
 
@@ -38,15 +47,13 @@ const validateRequest = (req, res, next) => {
     return;
   }
 
-  // TODO check signature
-
-  res.status(204).send('no action taken');
+  res.status(204);
   /* eslint-enable no-param-reassign */
 };
 
 app.post('/webhook', validateRequest, (req, res) => {
   // NOTE at this point we have checked that the event is either a push or a merge of our designated branch
-  execFile('sh', [FILE], { cwd: process.cwd(), encoding: 'utf8' }, (err, stdout, stderr) => {
+  execFile('sh', [SCRIPT, APP_PATH, BRANCH_NAME], { cwd: process.cwd(), encoding: 'utf8' }, (err, stdout, stderr) => {
     if (err) {
       process.stdout.write('\nerror executing webhook\n');
       process.stdout.write(stderr);
@@ -56,13 +63,11 @@ app.post('/webhook', validateRequest, (req, res) => {
       });
       return;
     }
-    res.status(204).json({
-      message: 'error attempting to update',
-      err,
+    res.status(200).json({
+      message: 'success',
+      result: stdout,
     });
   });
-
-
 });
 
 app.use((req, res) => {

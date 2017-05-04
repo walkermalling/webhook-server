@@ -1,0 +1,7 @@
+{
+  // "branch": "my branch name",
+  // "script": "/full/path/to/shell/script",
+  //  ... don't forget to chmod +x
+  // "app_path": "/full/path/to/repository",
+  // "port": 0000
+}
