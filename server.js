@@ -26,10 +26,12 @@ app.use(bodyParser.json());
 const authenticate = (req, res, next) => {
   const body = new Buffer(JSON.stringify(req.body));
   const hmac = crypto.createHmac('sha1', config.secret);
-  const payloadSignature = hmac.update(body, 'utf8').digest('hex');
+  const payloadSignature = `sha1=${hmac.update(body, 'utf8').digest('hex')}`;
   if (payloadSignature === req.get('X-Hub-Signature')) {
+    process.stdout.write(JSON.stringify({ message: 'webhook authorized', signature: payloadSignature }));
     next();
   } else {
+    process.stdout.write(JSON.stringify({ message: 'webhook unauthorized', expectedSig: payloadSignature, hookSignature: req.get('X-Hub-Signature') }));
     res.status(403).send('boo');
   }
 };
@@ -67,6 +69,7 @@ const validateRequest = (req, res, next) => {
 
 app.post('/hooks/github', authenticate, validateRequest, (req, res) => {
   // NOTE at this point we have checked that the event is either a push or a merge of our designated branch
+  process.stdout.write(JSON.stringify({ message: 'processing webhook' }));
   const args = [config.script, config.app_path, config.branch];
   const opts = { cwd: process.cwd(), encoding: 'utf8' };
   execFile('sh', args, opts, (err, stdout, stderr) => {
@@ -87,6 +90,7 @@ app.post('/hooks/github', authenticate, validateRequest, (req, res) => {
 });
 
 app.use((req, res) => {
+  process.stdout.write(JSON.stringify({ message: 'request rejected at unregistered route' }));
   res.status(404).send('404');
 });
 
